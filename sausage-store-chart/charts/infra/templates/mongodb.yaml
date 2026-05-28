@@ -2,8 +2,18 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mongodb
+  namespace: {{ .Release.Namespace }}
   annotations:
     helm.sh/hook-weight: "-5"
+  labels:
+    app: mongodb
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/managed-by: "{{ .Release.Service }}"
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/component: mongodb
+    app.kubernetes.io/part-of: {{ .Release.Name }}
 spec:
   serviceName: mongodb
   replicas: 1
@@ -14,6 +24,13 @@ spec:
     metadata:
       labels:
         app: mongodb
+        app.kubernetes.io/name: mongodb
+        app.kubernetes.io/instance: "{{ .Release.Name }}"
+        app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+        app.kubernetes.io/managed-by: "{{ .Release.Service }}"
+        helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        app.kubernetes.io/component: mongodb
+        app.kubernetes.io/part-of: {{ .Release.Name }}
     spec:
       containers:
       - name: mongodb
@@ -45,8 +62,16 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mongodb
+  namespace: {{ .Release.Namespace }}
   labels:
     app: mongodb
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/managed-by: "{{ .Release.Service }}"
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/component: mongodb
+    app.kubernetes.io/part-of: {{ .Release.Name }}
 spec:
   ports:
   - port: {{ .Values.mongodb.containerPort }}
@@ -59,6 +84,16 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: mongodb-conf
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: mongodb
+    app.kubernetes.io/name: mongodb
+    app.kubernetes.io/instance: "{{ .Release.Name }}"
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/managed-by: "{{ .Release.Service }}"
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    app.kubernetes.io/component: mongodb
+    app.kubernetes.io/part-of: {{ .Release.Name }}
 data:
   MONGO_INITDB_ROOT_USERNAME: {{ .Values.mongodb.env.MONGO_INITDB_ROOT_USERNAME }}
   MONGO_INITDB_ROOT_PASSWORD: {{ .Values.mongodb.env.MONGO_INITDB_ROOT_PASSWORD }}

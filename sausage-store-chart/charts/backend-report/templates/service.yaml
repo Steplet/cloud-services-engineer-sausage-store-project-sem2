@@ -5,7 +5,6 @@ metadata:
   name: {{ .Release.Name }}-{{ .Chart.Name }}-service
   namespace: {{ .Release.Namespace }}
   labels:
-    app: {{ .Release.Name }}-{{ .Chart.Name }}-service
     app.kubernetes.io/name: {{ .Chart.Name }}
     app.kubernetes.io/instance: "{{ .Release.Name }}"
     app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
@@ -16,8 +15,10 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: {{ .Values.service.port }}
+    - name: http
+      port: {{ .Values.service.port }}
       protocol: TCP
-      targetPort: {{ .Values.service.port }}
+      targetPort: {{ .Values.containerPort }}
   selector:
     app: {{ .Release.Name }}-{{ .Chart.Name }}
+
