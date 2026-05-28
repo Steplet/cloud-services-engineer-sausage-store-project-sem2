@@ -12,6 +12,7 @@ env:
   SAUSAGE_STORE_NAMESPACE: ${{secrets.SAUSAGE_STORE_NAMESPACE}}
   KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
   VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
+  FRONTEND_INGRESS_HOST: ${{ secrets.FRONTEND_INGRESS_HOST }}
 
 jobs:
   # Сборка и пуш образов в докерхаб:
@@ -149,5 +150,6 @@ jobs:
             helm upgrade --install sausage-store nexus/sausage-store \
               --namespace "${SAUSAGE_STORE_NAMESPACE}" \
               --create-namespace \
+              --set frontend.ingress.host="${FRONTEND_INGRESS_HOST}" \
               --wait \
               --timeout 10m

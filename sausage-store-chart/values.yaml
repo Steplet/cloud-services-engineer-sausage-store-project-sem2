@@ -15,7 +15,7 @@ frontend:
   service:
     port: 80
   ingress:
-    host: front-<yourname>.2sem.students-projects.ru
+    host: front-steplet.2sem.students-projects.ru
     path: /
     pathType: Prefix
     tlsSecretName: 2sem-students-projects-wildcard-secret
