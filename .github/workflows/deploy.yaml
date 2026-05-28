@@ -95,12 +95,15 @@ jobs:
             set -euo pipefail
 
             PKG="$(ls -1 sausage-store-*.tgz | head -n 1)"
-            echo "Uploading ${PKG} to ${NEXUS_HELM_REPO}/"
+            REPO_URL="${NEXUS_HELM_REPO%/}/"
+            echo "Uploading ${PKG} to ${REPO_URL}"
 
+            # Nexus Helm hosted repositories expect upload to the repository root URL.
+            # The server derives the destination path from the uploaded filename.
             curl --fail --show-error --silent \
               -u "${NEXUS_HELM_REPO_USER}:${NEXUS_HELM_REPO_PASSWORD}" \
               --upload-file "${PKG}" \
-              "${NEXUS_HELM_REPO}/${PKG}"
+              "${REPO_URL}"
 
   # Деплоим приложения в кластер Kubernetes с помощью helm-чарт
   deploy_helm_chart_to_kubernetes:
