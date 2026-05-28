@@ -9,7 +9,7 @@ env:
   NEXUS_HELM_REPO: ${{ secrets.NEXUS_HELM_REPO }}
   NEXUS_HELM_REPO_USER: ${{ secrets.NEXUS_HELM_REPO_USER }}
   NEXUS_HELM_REPO_PASSWORD: ${{ secrets.NEXUS_HELM_REPO_PASSWORD }}
-  SAUSAGE_STORE_NAMESPACE: YOUR_NAMESPACE
+  SAUSAGE_STORE_NAMESPACE: ${{secrets.SAUSAGE_STORE_NAMESPACE}}
   KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
   VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
 
@@ -48,7 +48,7 @@ jobs:
             # Для каждого пересобранного образа 
             # устанавливаем тег latest, чтобы потом
             # на сервере и в docker-compose.yml не указывать версию образа:
-            tags: YOUR_DOCKERHUB/sausage-backend:latest
+            tags: stplet/sausage-backend:latest
             build-args: |
               VERSION=${{ github.sha }}
         - name: Push Frontend to DockerHub
@@ -56,13 +56,13 @@ jobs:
           with:
             context: ./frontend/
             push: true
-            tags: YOUR_DOCKERHUB/sausage-frontend:latest
+            tags: steplet/sausage-frontend:latest
         - name: Push Backend-report to DockerHub
           uses: docker/build-push-action@v4
           with:
             context: ./backend-report/
             push: true
-            tags: YOUR_DOCKERHUB/sausage-backend-report:latest
+            tags: steplet/sausage-backend-report:latest
   # Упаковываем helm-чарт и пушим его в Nexus
   add_helm_chart_to_nexus:
       name: Add Helm Chart To Nexus
@@ -70,7 +70,36 @@ jobs:
       needs: build_and_push_to_docker_hub
 
       steps:
-      #### Опишите необходимые шаги
+        - name: Check out the repo
+          uses: actions/checkout@v3
+
+        - name: Install Helm
+          uses: azure/setup-helm@v4
+
+        - name: Lint Helm chart
+          run: |
+            helm lint ./sausage-store-chart
+
+        - name: Package Helm chart
+          run: |
+            helm package ./sausage-store-chart
+            ls -la ./*.tgz
+
+        - name: Upload Helm chart to Nexus
+          env:
+            NEXUS_HELM_REPO: ${{ env.NEXUS_HELM_REPO }}
+            NEXUS_HELM_REPO_USER: ${{ env.NEXUS_HELM_REPO_USER }}
+            NEXUS_HELM_REPO_PASSWORD: ${{ env.NEXUS_HELM_REPO_PASSWORD }}
+          run: |
+            set -euo pipefail
+
+            PKG="$(ls -1 sausage-store-*.tgz | head -n 1)"
+            echo "Uploading ${PKG} to ${NEXUS_HELM_REPO}/"
+
+            curl --fail --show-error --silent \
+              -u "${NEXUS_HELM_REPO_USER}:${NEXUS_HELM_REPO_PASSWORD}" \
+              --upload-file "${PKG}" \
+              "${NEXUS_HELM_REPO}/${PKG}"
 
   # Деплоим приложения в кластер Kubernetes с помощью helm-чарт
   deploy_helm_chart_to_kubernetes:
@@ -79,4 +108,46 @@ jobs:
       needs: add_helm_chart_to_nexus
 
       steps:
-      #### Опишите необходимые шаги
+        - name: Check out the repo
+          uses: actions/checkout@v3
+
+        - name: Install kubectl
+          uses: azure/setup-kubectl@v4
+
+        - name: Install Helm
+          uses: azure/setup-helm@v4
+
+        - name: Configure kubeconfig
+          env:
+            KUBE_CONFIG: ${{ env.KUBE_CONFIG }}
+          run: |
+            set -euo pipefail
+
+            mkdir -p "${HOME}/.kube"
+            # If secret contains plain YAML, write it as-is.
+            if echo "${KUBE_CONFIG}" | head -n 1 | grep -q '^apiVersion:'; then
+              printf '%s\n' "${KUBE_CONFIG}" > "${HOME}/.kube/config"
+            else
+              # Otherwise assume base64 and decode.
+              echo "${KUBE_CONFIG}" | base64 -d > "${HOME}/.kube/config"
+            fi
+
+            chmod 600 "${HOME}/.kube/config"
+            kubectl config current-context
+
+        - name: Add Nexus Helm repo
+          run: |
+            helm repo add nexus "${NEXUS_HELM_REPO}" \
+              --username "${NEXUS_HELM_REPO_USER}" \
+              --password "${NEXUS_HELM_REPO_PASSWORD}"
+            helm repo update
+
+        - name: Deploy Helm chart to Kubernetes
+          run: |
+            set -euo pipefail
+
+            helm upgrade --install sausage-store nexus/sausage-store \
+              --namespace "${SAUSAGE_STORE_NAMESPACE}" \
+              --create-namespace \
+              --wait \
+              --timeout 10m
