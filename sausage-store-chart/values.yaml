@@ -20,7 +20,7 @@ frontend:
     pathType: Prefix
     tlsSecretName: 2sem-students-projects-wildcard-secret
   containerPort: 80
-  image: YOUR_DOCKERHUB/sausage-frontend:latest
+  image: steplet/sausage-frontend:latest
   resources:
     requests:
       memory: "128Mi"
@@ -50,7 +50,7 @@ backend:
     rollingUpdate:
       maxUnavailable: 1
       maxSurge: 1
-  image: YOUR_DOCKERHUB/sausage-backend:latest
+  image: steplet/sausage-backend:latest
   imagePullPolicy: Always
   resources:
     requests:
@@ -83,7 +83,7 @@ backend-report:
   revisionHistoryLimit: 15
   strategy:
     type: Recreate
-  image: YOUR_DOCKERHUB/sausage-backend-report:latest
+  image: steplet/sausage-backend-report:latest
   service:
     port: 8080
   containerPort: 8080
