@@ -39,6 +39,7 @@ backend:
     postgresUri: jdbc:postgresql://postgresql:5432/sausage-store
     postgresUser: store
     postgresPassword: storepassword
+    mongodbUri: mongodb://root:rootpassword@mongodb:27017/sausage-store?authSource=admin
     reportPath: /logs/reports
     logPath: /logs
   service:
@@ -90,7 +91,7 @@ backend-report:
   config:
     port: "8080"
   secret:
-    dbUri: mongodb://reports:reportspassword@mongodb:27017/sausage-store?authSource=admin
+    dbUri: mongodb://root:rootpassword@mongodb:27017/sausage-store?authSource=admin
   resources:
     requests:
       memory: "128Mi"
@@ -138,3 +139,10 @@ infra:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: rootpassword
     containerPort: 27017
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "50m"
+      limits:
+        memory: "256Mi"
+        cpu: "250m"

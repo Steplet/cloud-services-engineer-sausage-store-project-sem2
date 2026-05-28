@@ -34,6 +34,9 @@ metadata:
 data:
   POSTGRES_DB: "{{ .Values.postgresql.auth.database }}"
   POSTGRES_USER: "{{ .Values.postgresql.auth.username }}"
+  # Put data into a subdirectory to avoid initdb failure when the volume
+  # contains filesystem artifacts like 'lost+found'.
+  PGDATA: "/var/lib/postgresql/data/pgdata"
 ---
 apiVersion: v1
 kind: Service
